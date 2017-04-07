@@ -91,7 +91,7 @@ class Board(cells: Array[Cell], private val width: Int, mines: Int) {
       // Show surrounding cells in case this cell has no surrounding mines
       c.kind match {
         case Empty(0) =>
-          val surrounding = surroundingPositions(surroundingPos).filter(p => {
+          val surrounding = Position.surroundings(surroundingPos, width, height).filter(p => {
             val c = getCellInPosition(p).get
             c.hidden && c.kind != Mine
           })
@@ -105,21 +105,14 @@ class Board(cells: Array[Cell], private val width: Int, mines: Int) {
 
   // -- Utility methods --
 
-  private def surroundingPositions(pos: Position): Seq[Position] = {
-    val shiftUpLeft = new Position(-1, -1)
-    (0 until 9).map(i => Position.fromIndex(i, 3) + shiftUpLeft + pos)
-               .filterNot(p => p.x == pos.x && p.y == pos.y) // Skip current position
-               .filter(validPosition)
-  }
-  private def surroundingCells(pos: Position): Seq[Cell] = surroundingPositions(pos).flatMap(getCellInPosition)
+  private def surroundingCells(pos: Position): Seq[Cell] = Position.surroundings(pos, width, height).flatMap(getCellInPosition)
 
   private def getCellInPosition(pos: Position): Option[Cell] = {
-    if (validPosition(pos))
+    if (Position.isValid(pos, width, height))
       Some(cells(Position.toIndex(pos, width)))
     else
       None
   }
-  def validPosition(pos: Position): Boolean = 0 <= pos.x && pos.x < width && 0 <= pos.y && pos.y < height
 
   private def spawnMines(protectedCell: Cell) = {
     assert(mines < cells.length)
