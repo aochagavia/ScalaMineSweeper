@@ -7,8 +7,4 @@ get to grips with the language (it is getting kind of repetitive, though, with v
 [Java 8](https://github.com/aochagavia/JavaMineSweeper) and
 [C++ 11](https://github.com/aochagavia/CppMineSweeper)).
 
-The project uses SBT, so you can run it using as shown below.
-
-```
-sbt run
-```
+The project uses SBT, so you can run it using `sbt run`
