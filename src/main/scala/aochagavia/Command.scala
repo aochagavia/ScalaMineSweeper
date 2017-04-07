@@ -1,5 +1,7 @@
 package aochagavia
 
+import scala.util.Try
+
 sealed trait Command {
   def run(board: Board): Unit
 }
@@ -19,18 +21,17 @@ object Command {
       return None
     }
 
-    val pos = try {
-      val x = parts(1).toInt - 1
-      val y = parts(2).toInt - 1
-      Position(x, y)
-    } catch {
-      case _: Exception => return None
-    }
+    val targetPos = for {
+      x <- Try(parts(1).toInt).map(_ - 1)
+      y <- Try(parts(2).toInt).map(_ - 1)
+    } yield Position(x, y)
 
-    parts(0) match {
-      case "m" => Some(ToggleMark(pos))
-      case "r" => Some(Reveal(pos))
-      case _ => None
-    }
+    targetPos.toOption.flatMap(pos => {
+      parts(0) match {
+        case "m" => Some(ToggleMark(pos))
+        case "r" => Some(Reveal(pos))
+        case _ => None
+      }
+    })
   }
 }
