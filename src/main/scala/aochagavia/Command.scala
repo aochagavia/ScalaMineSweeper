@@ -1,16 +1,18 @@
 package aochagavia
 
-abstract class Command {
+sealed trait Command {
   def run(board: Board): Unit
 }
-class Reveal(pos: Position) extends Command {
+
+case class Reveal(pos: Position) extends Command {
   def run(board: Board): Unit = board.reveal(pos)
 }
-class ToggleMark(pos: Position) extends Command {
+
+case class ToggleMark(pos: Position) extends Command {
   def run(board: Board): Unit = board.toggleMark(pos)
 }
 
-object CommandParser {
+object Command {
   def parse(cmd: String): Option[Command] = {
     val parts = cmd.split(" ")
     if (parts.length < 3) {
@@ -26,8 +28,8 @@ object CommandParser {
     }
 
     val command = parts(0) match {
-      case "m" => new ToggleMark(pos)
-      case "r" => new Reveal(pos)
+      case "m" => ToggleMark(pos)
+      case "r" => Reveal(pos)
       case _ => return None
     }
 

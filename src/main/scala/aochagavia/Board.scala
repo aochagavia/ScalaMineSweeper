@@ -5,16 +5,8 @@ import scala.util.Random
 
 object Board {
   def create(width: Int, height: Int): Board = {
-    val arr = new Array[Cell](width * height)
-    for (i <- arr.indices) {
-      arr(i) = new Cell(hidden = true, marked = false, kind = Empty(0))
-    }
-
-    new Board(arr, width, 10)
-  }
-
-  private def indexToPosition(i: Int, width: Int): Position = {
-    new Position(i % width, i / width)
+    val cells = Array.fill(width * height)(new Cell(hidden = true, marked = false, kind = Empty(0)))
+    new Board(cells, width, mines = 10)
   }
 }
 
@@ -24,11 +16,9 @@ class Board(cells: Array[Cell], width: Int, mines: Int) {
 
   def outcome(): Outcome = {
     // Lose condition: a mine is shown
-    val defeat = cells.filter(!_.hidden).exists(cell => {
-      cell.kind match {
-        case Mine => true
-        case _ => false
-      }
+    val defeat = cells.filter(!_.hidden).exists(_.kind match {
+      case Mine => true
+      case _ => false
     })
 
     // Win condition: everything is shown besides the mines
@@ -69,10 +59,12 @@ class Board(cells: Array[Cell], width: Int, mines: Int) {
 
       // Show surrounding cells in case this cell has no surrounding mines
       c.kind match {
-        case Empty(0) => surroundingPositions(surroundingPos).filter(p => {
-                                                                val c = getCellInPosition(p).get
-                                                                c.hidden && c.kind != Mine
-                                                              }).foreach(showQueue.enqueue(_))
+        case Empty(0) =>
+          val surrounding = surroundingPositions(surroundingPos).filter(p => {
+            val c = getCellInPosition(p).get
+            c.hidden && c.kind != Mine
+          })
+          showQueue.enqueue(surrounding: _*)
         case _ =>
       }
     }
@@ -121,26 +113,20 @@ class Board(cells: Array[Cell], width: Int, mines: Int) {
 
   private def surroundingPositions(pos: Position): Seq[Position] = {
     val shiftUpLeft = new Position(-1, -1)
-    (0 until 9).map(i => Board.indexToPosition(i, 3).add(shiftUpLeft).add(pos))
+    (0 until 9).map(i => Position.fromIndex(i, 3) + shiftUpLeft + pos)
                .filterNot(p => p.x == pos.x && p.y == pos.y) // Skip current position
                .filter(validPosition)
   }
-  private def surroundingCells(pos: Position): Seq[Cell] = {
-    surroundingPositions(pos).flatMap(getCellInPosition)
-  }
+  private def surroundingCells(pos: Position): Seq[Cell] = surroundingPositions(pos).flatMap(getCellInPosition)
+
   private def getCellInPosition(pos: Position): Option[Cell] = {
-    positionToIndex(pos).map(cells)
-  }
-  def validPosition(pos: Position): Boolean = {
-    0 <= pos.x && pos.x < width && 0 <= pos.y && pos.y < height
-  }
-  private def positionToIndex(pos: Position): Option[Int] = {
-    if (validPosition(pos)) {
-      Some(pos.x + pos.y * width)
-    } else {
+    if (validPosition(pos))
+      Some(cells(Position.toIndex(pos, width)))
+    else
       None
-    }
   }
+  def validPosition(pos: Position): Boolean = 0 <= pos.x && pos.x < width && 0 <= pos.y && pos.y < height
+
   private def spawnMines(protectedCell: Cell) = {
     assert(mines < cells.length)
     minesSpawned = true
@@ -155,7 +141,7 @@ class Board(cells: Array[Cell], width: Int, mines: Int) {
         randomCell.kind = Mine
 
         // Update the value of surrounding cells
-        for (c <- surroundingCells(Board.indexToPosition(i, width))) {
+        for (c <- surroundingCells(Position.fromIndex(i, width))) {
           c.kind match {
             case Empty(x) => c.kind = Empty(x + 1)
             case _ =>

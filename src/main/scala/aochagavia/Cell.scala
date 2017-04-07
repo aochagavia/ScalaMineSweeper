@@ -10,7 +10,7 @@ class Cell(var hidden: Boolean, var marked: Boolean, var kind: CellKind) {
   }
 }
 
-class CellKind
+sealed trait CellKind
 case class Empty(surroundingMines: Int) extends CellKind {
   override def toString: String = {
     surroundingMines match {
