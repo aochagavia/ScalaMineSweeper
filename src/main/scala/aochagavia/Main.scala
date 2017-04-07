@@ -16,7 +16,7 @@ object Main {
 
   // A single iteration of the game loop
   @tailrec def play(board: Board): Unit = {
-    print(board)
+    print(Board.display(board))
     print("Enter a command: ")
     System.out.flush()
 

@@ -22,17 +22,15 @@ object Command {
     val pos = try {
       val x = parts(1).toInt - 1
       val y = parts(2).toInt - 1
-      new Position(x, y)
+      Position(x, y)
     } catch {
       case _: Exception => return None
     }
 
-    val command = parts(0) match {
-      case "m" => ToggleMark(pos)
-      case "r" => Reveal(pos)
-      case _ => return None
+    parts(0) match {
+      case "m" => Some(ToggleMark(pos))
+      case "r" => Some(Reveal(pos))
+      case _ => None
     }
-
-    Some(command)
   }
 }
