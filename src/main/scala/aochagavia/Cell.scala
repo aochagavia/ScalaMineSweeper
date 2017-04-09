@@ -13,7 +13,7 @@ object Cell {
   }
 }
 
-sealed class Cell(var hidden: Boolean, var marked: Boolean, var kind: CellKind)
+case class Cell(hidden: Boolean, marked: Boolean, kind: CellKind)
 sealed trait CellKind
 case class Empty(surroundingMines: Int) extends CellKind
 case object Mine extends CellKind

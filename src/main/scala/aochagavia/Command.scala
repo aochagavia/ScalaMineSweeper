@@ -3,15 +3,15 @@ package aochagavia
 import scala.util.Try
 
 sealed trait Command {
-  def run(board: Board): Unit
+  def run(board: Board): Board
 }
 
 case class Reveal(pos: Position) extends Command {
-  def run(board: Board): Unit = board.reveal(pos)
+  def run(board: Board): Board = board.reveal(pos)
 }
 
 case class ToggleMark(pos: Position) extends Command {
-  def run(board: Board): Unit = board.toggleMark(pos)
+  def run(board: Board): Board = board.toggleMark(pos)
 }
 
 object Command {

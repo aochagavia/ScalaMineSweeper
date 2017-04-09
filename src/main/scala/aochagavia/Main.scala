@@ -11,7 +11,7 @@ object Main {
     println("m x y: toggle a mark on the cell at coordinates (x, y)")
     println()
 
-    play(board = Board.create(10, 10))
+    play(board = ImmutableBoard.create(10, 10))
   }
 
   // A single iteration of the game loop
@@ -26,20 +26,23 @@ object Main {
       return
     }
 
-    Command.parse(line) match {
-      case Some(cmd) => cmd.run(board)
-      case None => println("Invalid command, try again.")
+    val newBoard = Command.parse(line) match {
+      case Some(cmd) =>
+        cmd.run(board)
+      case None =>
+        println("Invalid command, try again.")
+        board
     }
 
-    board.outcome() match {
+    Board.outcome(newBoard) match {
       case Victory =>
-        print(board)
+        print(Board.display(newBoard))
         println("Congratulations, you won!")
       case Defeat =>
-        print(board)
+        print(Board.display(newBoard))
         println("Too bad, you lost!")
       case Ongoing =>
-        play(board)
+        play(newBoard)
     }
   }
 }

@@ -1,12 +1,29 @@
 package aochagavia
 
-import scala.collection.mutable
-import scala.util.Random
+trait Board {
+  val mines: Int
+  val width: Int
+  def height: Int
+  def cells: Iterable[Cell]
+  def getCell(pos: Position): Cell
+  def reveal(pos: Position): Board
+  def toggleMark(pos: Position): Board
+}
 
 object Board {
-  def create(width: Int, height: Int): Board = {
-    val cells = Array.fill(width * height)(new Cell(hidden = true, marked = false, kind = Empty(0)))
-    new Board(cells, width, mines = 10)
+  def outcome(board: Board): Outcome = {
+    // Lose condition: a mine is shown
+    val defeat = board.cells.filter(!_.hidden).exists(_.kind match {
+      case Mine => true
+      case _ => false
+    })
+
+    // Win condition: everything is shown besides the mines
+    val victory = board.cells.count(_.hidden) == board.mines
+
+    if (defeat) Defeat
+    else if (victory) Victory
+    else Ongoing
   }
 
   def display(board: Board): String = {
@@ -34,7 +51,7 @@ object Board {
 
       // Cells
       for (x <- 0 until board.width) {
-        val cell = board.getCellInPosition(new Position(x, y)).get
+        val cell = board.getCell(Position(x, y))
         buf.append(Cell.display(cell))
       }
 
@@ -42,99 +59,5 @@ object Board {
     }
 
     buf.toString
-  }
-}
-
-class Board(cells: Array[Cell], private val width: Int, mines: Int) {
-  private var minesSpawned: Boolean = false
-  private def height: Int = cells.length / width
-
-  def outcome(): Outcome = {
-    // Lose condition: a mine is shown
-    val defeat = cells.filter(!_.hidden).exists(_.kind match {
-      case Mine => true
-      case _ => false
-    })
-
-    // Win condition: everything is shown besides the mines
-    val victory = cells.count(!_.hidden) == cells.length - mines
-
-    if (defeat) Defeat
-    else if (victory) Victory
-    else Ongoing
-  }
-
-  // -- User actions
-
-  def reveal(pos: Position): Unit = {
-    val cell = getCellInPosition(pos) match {
-      case Some(c) => c
-      case None => return
-    }
-
-    // Spawn mines the first time a reveal happens, so the player never loses the first turn
-    if (!minesSpawned) {
-      spawnMines(cell)
-    }
-
-    // Show this and surrounding cells
-    val showQueue = new mutable.Queue[Position]()
-    showQueue.enqueue(pos)
-
-    while (showQueue.nonEmpty) {
-      val surroundingPos = showQueue.dequeue()
-
-      // Note: we know the cell exists!
-      val c = getCellInPosition(surroundingPos).get
-      c.hidden = false
-
-      // Show surrounding cells in case this cell has no surrounding mines
-      c.kind match {
-        case Empty(0) =>
-          val surrounding = Position.surroundings(surroundingPos, width, height).filter(p => {
-            val c = getCellInPosition(p).get
-            c.hidden && c.kind != Mine
-          })
-          showQueue.enqueue(surrounding: _*)
-        case _ =>
-      }
-    }
-  }
-
-  def toggleMark(pos: Position): Unit = getCellInPosition(pos).foreach(c => c.marked = !c.marked)
-
-  // -- Utility methods --
-
-  private def surroundingCells(pos: Position): Seq[Cell] = Position.surroundings(pos, width, height).flatMap(getCellInPosition)
-
-  private def getCellInPosition(pos: Position): Option[Cell] = {
-    if (Position.isValid(pos, width, height))
-      Some(cells(Position.toIndex(pos, width)))
-    else
-      None
-  }
-
-  private def spawnMines(protectedCell: Cell) = {
-    assert(mines < cells.length)
-    minesSpawned = true
-    val rng = new Random()
-
-    var minesToSpawn = mines
-    while (minesToSpawn > 0) {
-      val i = rng.nextInt(cells.length)
-      val randomCell = cells(i)
-      if (randomCell != protectedCell && randomCell.kind != Mine) {
-        minesToSpawn -= 1
-        randomCell.kind = Mine
-
-        // Update the value of surrounding cells
-        for (c <- surroundingCells(Position.fromIndex(i, width))) {
-          c.kind match {
-            case Empty(x) => c.kind = Empty(x + 1)
-            case _ =>
-          }
-        }
-      }
-    }
   }
 }
