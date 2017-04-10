@@ -16,7 +16,7 @@ object Main {
 
   // A single iteration of the game loop
   @tailrec def play(board: Board): Unit = {
-    print(Board.display(board))
+    print(board.display())
     print("Enter a command: ")
     System.out.flush()
 
@@ -34,12 +34,12 @@ object Main {
         board
     }
 
-    Board.outcome(newBoard) match {
+    newBoard.outcome() match {
       case Victory =>
-        print(Board.display(newBoard))
+        print(newBoard.display())
         println("Congratulations, you won!")
       case Defeat =>
-        print(Board.display(newBoard))
+        print(newBoard.display())
         println("Too bad, you lost!")
       case Ongoing =>
         play(newBoard)
